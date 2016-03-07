@@ -1,0 +1,15 @@
+{
+  "name": "mackey/yandex",
+  "description": "PHP SDK для работы с некоторыми сервисами яндекса (Яндекс.Диск, Yandex.Disk)",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Dmitry Arhitector",
+      "email": "email@example.com"
+    }
+  ],
+  "require": {
+    "zendframework/zend-diactoros": "1.3.3"
+  }
+}
