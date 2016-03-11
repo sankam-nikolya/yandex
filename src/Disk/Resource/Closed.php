@@ -333,7 +333,7 @@ class Closed extends AbstractResource
 	 * @throws \OutOfBoundsException
 	 * @throws \UnexpectedValueException
 	 */
-	public function download($path, $overwrite = false/*, $progress = null*/)
+	public function download($path, $overwrite = false)
 	{
 		if ( ! $this->has())
 		{
@@ -473,9 +473,7 @@ class Closed extends AbstractResource
 		}
 		else
 		{
-			//stream_copy_to_stream($file_path, fopen('php://temp', 'ab'));
-
-
+			//stream_copy_to_stream($file_path, fopen('php://temp', 'wb'));
 		}
 
 		$access_upload = json_decode($this->parent->send(new Request($this->uri->withPath($this->uri->getPath()
@@ -493,12 +491,9 @@ class Closed extends AbstractResource
 
 		//$stream = new GzipEncode($file_path, 'rb');
 		$stream = new Stream($file_path, 'rb');
-
-
 		$response = $this->parent->send((new Request($access_upload['href'], 'PUT', $stream)));
 
 		return $response->getStatusCode() == 201;
 	}
-
 
 }

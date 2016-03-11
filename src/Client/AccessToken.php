@@ -188,7 +188,7 @@ class AccessToken extends Client
 
 		try
 		{
-			$response = json_decode($this->send($request)->getBody());
+			$response = json_decode($this->send($request)->wait()->getBody());
 
 			if ($onlyToken)
 			{
