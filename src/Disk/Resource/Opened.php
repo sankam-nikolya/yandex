@@ -169,6 +169,9 @@ class Opened extends AbstractResource
 			throw new \RangeException('Файл скачан, но контрольные суммы различаются.');
 		}
 
+		$this->emit('disk.downloaded', $this);
+		$this->parent->emit('disk.downloaded', $this);
+
 		return $response->getStatusCode() == 200;
 	}
 
@@ -252,6 +255,9 @@ class Opened extends AbstractResource
 
 			if (isset($response['operation']))
 			{
+				$this->emit('disk.operation', $this);
+				$this->parent->emit('disk.operation', $this);
+
 				return $response['operation'];
 			}
 

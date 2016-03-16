@@ -516,9 +516,6 @@ class Disk extends Client\AccessToken implements \ArrayAccess, \IteratorAggregat
 
 				if ( ! $operation->getQuery())
 				{
-
-					$this->emit('disk.operation', $this);
-
 					$this->operations[] = $responseBody['operation'] = substr(strrchr($operation->getPath(), '/'), 1);
 					$stream = new Stream('php://temp', 'w');
 					$stream->write(json_encode($responseBody));
@@ -529,6 +526,16 @@ class Disk extends Client\AccessToken implements \ArrayAccess, \IteratorAggregat
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Этот экземпляр используется в качестве обёртки
+	 *
+	 * @return boolean
+	 */
+	public function isWrapper()
+	{
+		return in_array(\Mackey\Yandex\Disk\Stream\Wrapper::SCHEME, stream_get_wrappers());
 	}
 
 }

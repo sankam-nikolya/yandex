@@ -14,7 +14,6 @@ use Mackey\Yandex\Client\Exception\NotFoundException;
 use Mackey\Yandex\Disk\AbstractResource;
 use Mackey\Yandex\Disk\Exception\AlreadyExistsException;
 use Mackey\Yandex\Disk\Stream\GzipDecode;
-use Mackey\Yandex\Disk\Stream\GzipEncode;
 use Zend\Diactoros\Request;
 use Zend\Diactoros\Stream;
 use Zend\Diactoros\Uri;
@@ -118,6 +117,8 @@ class Closed extends AbstractResource
 	 *
 	 * @param string $index
 	 * @param mixed  $default
+	 *
+	 * @return mixed|null
 	 */
 	public function getProperty($index, $default = null)
 	{
@@ -140,7 +141,7 @@ class Closed extends AbstractResource
 	 * Добавление метаинформации для ресурса
 	 *
 	 * @param    mixed $meta  строка либо массив значений
-	 * @param    mixed $value NULL чтобы удалить определённую метаинформаию когда $data_set строка
+	 * @param    mixed $value NULL чтобы удалить определённую метаинформаию когда $meta строка
 	 *
 	 * @return $this
 	 * @throws \LengthException
@@ -227,6 +228,66 @@ class Closed extends AbstractResource
 	}
 
 	/**
+	 * Удаление файла или папки
+	 *
+	 * @param    boolean $permanently TRUE Признак безвозвратного удаления
+	 *
+	 * @return    mixed
+	 */
+	public function delete($permanently = false)
+	{
+		$response = $this->parent->send(new Request($this->uri->withPath($this->uri->getPath().'resources')
+			->withQuery(http_build_query([
+				'path'        => $this->getPath(),
+				'permanently' => (bool) $permanently
+			])), 'DELETE'));
+
+		if ($response->getStatusCode() == 202 || $response->getStatusCode() == 204)
+		{
+			$this->setContents([]);
+
+			$this->emit('disk.delete', $this);
+
+			if ($response->getStatusCode() == 202)
+			{
+				$response = json_decode($response->getBody(), true);
+
+				if (isset($response['operation']))
+				{
+					$this->emit('disk.operation', $this);
+					$this->parent->emit('disk.operation', $this);
+
+					return $response['operation'];
+				}
+			}
+
+			try
+			{
+				/*$trash = $this->parent->trash(null, 1)
+					->setSort('deleted', true)
+					->getFirst();
+
+				// любая папка в корзине всегда будет в начале списка
+				// $this->parent->trash(null, 0)->get('total')
+				// $this->parent->trash(null, 1, total - 1)->getFirst()
+
+				if ($trash && $trash->get('origin_path') == $this->getPath())
+				{
+					return $trash;
+				}*/
+			}
+			catch (\Exception $exc)
+			{
+
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Перемещение файла или папки.
 	 * Перемещать файлы и папки на Диске можно, указывая текущий путь к ресурсу и его новое положение.
 	 * Если запрос был обработан без ошибок, API составляет тело ответа в зависимости от вида указанного ресурса –
@@ -237,6 +298,8 @@ class Closed extends AbstractResource
 	 * @param    string|Closed $destination новый путь.
 	 * @param   boolean        $overwrite   признак перезаписи файлов. Учитывается, если ресурс перемещается в папку, в
 	 *                                      которой уже есть ресурс с таким именем.
+	 *
+	 * @return bool
 	 */
 	public function move($destination, $overwrite = false)
 	{
@@ -259,6 +322,9 @@ class Closed extends AbstractResource
 
 			if (isset($response['operation']))
 			{
+				$this->emit('disk.operation', $this);
+				$this->parent->emit('disk.operation', $this);
+
 				return $response['operation'];
 			}
 
@@ -284,6 +350,8 @@ class Closed extends AbstractResource
 		}
 		catch (\Exception $exc)
 		{
+			var_dump($exc);
+
 			throw $exc;
 		}
 
@@ -291,9 +359,11 @@ class Closed extends AbstractResource
 	}
 
 	/**
-	 *	Публикация ресурса\Закрытие доступа
+	 * Публикация ресурса\Закрытие доступа
 	 *
-	 *	@param	string|Resource
+	 * @param    string|Resource
+	 *
+	 * @return $this|Collection|Opened
 	 */
 	public function publish($publish = true)
 	{
@@ -370,6 +440,9 @@ class Closed extends AbstractResource
 
 					fclose($path);
 
+					$this->emit('disk.downloaded', $this);
+					$this->parent->emit('disk.downloaded', $this);
+
 					return true;
 				}
 
@@ -405,8 +478,13 @@ class Closed extends AbstractResource
 		{
 			$response = json_decode($response->getBody(), true);
 
+			var_dump($response);
+
 			if (isset($response['operation']))
 			{
+				$this->emit('disk.operation', $this);
+				$this->parent->emit('disk.operation', $this);
+
 				return $response['operation'];
 			}
 
@@ -421,9 +499,8 @@ class Closed extends AbstractResource
 	 *
 	 *	@param	string	$file_path	может быть как путь к локальному файлу, так и URL к файлу
 	 *	@param	mixed	$overwrite
-	 *	@param	mixed	$progress
 	 *
-	 *	@return	boolean
+	 *	@return	mixed
 	 *
 	 *	@throws	mixed
 	 */
@@ -454,6 +531,9 @@ class Closed extends AbstractResource
 
 				if (isset($response['operation']))
 				{
+					$this->emit('disk.operation', $this);
+					$this->parent->emit('disk.operation', $this);
+
 					return $response['operation'];
 				}
 
@@ -492,6 +572,9 @@ class Closed extends AbstractResource
 		//$stream = new GzipEncode($file_path, 'rb');
 		$stream = new Stream($file_path, 'rb');
 		$response = $this->parent->send((new Request($access_upload['href'], 'PUT', $stream)));
+
+		$this->emit('disk.uploaded', $this);
+		$this->parent->emit('disk.uploaded', $this);
 
 		return $response->getStatusCode() == 201;
 	}

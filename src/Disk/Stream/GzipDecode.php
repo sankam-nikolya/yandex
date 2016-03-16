@@ -23,12 +23,8 @@ class GzipDecode extends Stream
 
 		parent::__construct($stream, $mode);
 
-		//  zlib.inflate (декомпрессия)
-		//stream_filter_append($this->resource, 'zlib.inflate', STREAM_FILTER_READ);
-
-		// zlib.deflate (компрессия)
+		stream_filter_append($this->resource, 'zlib.inflate', STREAM_FILTER_READ);
 		stream_filter_append($this->resource, 'zlib.deflate', STREAM_FILTER_WRITE);
-
 	}
 
 }

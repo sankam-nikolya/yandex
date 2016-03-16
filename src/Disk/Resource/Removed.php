@@ -133,6 +133,9 @@ class Removed extends AbstractResource
 
 				if (isset($response['operation']))
 				{
+					$this->emit('disk.operation', $this);
+					$this->parent->emit('disk.operation', $this);
+
 					return $response['operation'];
 				}
 			}
@@ -162,6 +165,9 @@ class Removed extends AbstractResource
 
 				if ( ! empty($response['operation']))
 				{
+					$this->emit('disk.operation', $this);
+					$this->parent->emit('disk.operation', $this);
+
 					return $response['operation'];
 				}
 

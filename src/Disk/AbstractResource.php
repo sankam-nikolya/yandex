@@ -9,11 +9,12 @@
 namespace Mackey\Yandex\Disk;
 
 
+use League\Event\EmitterTrait;
 use Mackey\Yandex\Client\ContainerTrait;
 
 abstract class AbstractResource implements \ArrayAccess, \Countable, \IteratorAggregate
 {
-	use ContainerTrait, FilterTrait {
+	use ContainerTrait, FilterTrait, EmitterTrait {
 		toArray as protected _toArray;
 		has as hasProperty;
 	}

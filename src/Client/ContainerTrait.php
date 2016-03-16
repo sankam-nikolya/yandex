@@ -27,7 +27,7 @@ trait ContainerTrait
 	 */
 	public function has($key)
 	{
-		return array_key_exists($key, $this->toArray());
+		return $this->hasByIndex($key);
 	}
 
 	/**
@@ -40,7 +40,7 @@ trait ContainerTrait
 	 */
 	public function get($index, $default = null)
 	{
-		if ($this->has($index))
+		if ($this->hasByIndex($index))
 		{
 			return $this->store[$index];
 		}
@@ -194,6 +194,18 @@ trait ContainerTrait
 		$this->store = $content;
 
 		return $this;
+	}
+
+	/**
+	 * Поиск по индексу
+	 *
+	 * @param $index
+	 *
+	 * @return bool
+	 */
+	protected function hasByIndex($index)
+	{
+		return array_key_exists($index, $this->toArray());
 	}
 
 }
